@@ -20,9 +20,16 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(helmet());
-const allowedOrigins = ['http://localhost:306', 'http://localhost:307', 'http://localhost:308', 'http://localhost:309', 'http://localhost:0306'];
+
+// Explicitly allowed origins including production Vercel URL
+const allowedOrigins = [
+  'http://localhost:306',
+  'http://localhost:307',
+  'http://localhost:308',
+  'http://localhost:0306',
+  'https://project-management-portal-five.vercel.app',
+];
 if (process.env.FRONTEND_URL) {
-  allowedOrigins.push(process.env.FRONTEND_URL);
   allowedOrigins.push(process.env.FRONTEND_URL.replace(/\/$/, ''));
 }
 
@@ -30,7 +37,6 @@ app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
     if (
-      allowedOrigins.includes(origin) ||
       allowedOrigins.includes(origin.replace(/\/$/, '')) ||
       (origin.startsWith('https://') && origin.endsWith('.vercel.app'))
     ) {
@@ -43,6 +49,9 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('tiny'));
+
+// Health check route — required by Render to verify the service is alive
+app.get('/health', (req, res) => res.json({ status: 'ok', service: 'ProjectNest API' }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
