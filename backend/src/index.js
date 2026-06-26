@@ -20,7 +20,26 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(helmet());
-app.use(cors({ origin: ['http://localhost:306', 'http://localhost:307', 'http://localhost:308', 'http://localhost:309', 'http://localhost:0306'], credentials: true }));
+const allowedOrigins = ['http://localhost:306', 'http://localhost:307', 'http://localhost:308', 'http://localhost:309', 'http://localhost:0306'];
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+  allowedOrigins.push(process.env.FRONTEND_URL.replace(/\/$/, ''));
+}
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (
+      allowedOrigins.includes(origin) ||
+      allowedOrigins.includes(origin.replace(/\/$/, '')) ||
+      (origin.startsWith('https://') && origin.endsWith('.vercel.app'))
+    ) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
+  credentials: true
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('tiny'));
