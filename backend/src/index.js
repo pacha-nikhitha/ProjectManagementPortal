@@ -4,14 +4,6 @@ const morgan = require('morgan');
 const helmet = require('helmet');
 const cors = require('cors');
 const database = require('./utils/database');
-const authRoutes = require('./routes/auth');
-const profileRoutes = require('./routes/profile');
-const projectRoutes = require('./routes/projects');
-const taskRoutes = require('./routes/tasks');
-const dashboardRoutes = require('./routes/dashboard');
-const reportRoutes = require('./routes/reports');
-const notificationRoutes = require('./routes/notifications');
-const adminRoutes = require('./routes/admin');
 const errorHandler = require('./middleware/errorHandler');
 
 dotenv.config();
@@ -27,6 +19,8 @@ const allowedOrigins = [
   'http://localhost:307',
   'http://localhost:308',
   'http://localhost:0306',
+  'http://localhost:3000',
+  'http://localhost:5173',
   'https://project-management-portal-five.vercel.app',
   'https://projectmanagementportal-5gn7.onrender.com',
 ];
@@ -54,28 +48,40 @@ app.use(morgan('tiny'));
 // Health check route — required by Render to verify the service is alive
 app.get('/health', (req, res) => res.json({ status: 'ok', service: 'ProjectNest API' }));
 
-app.use('/api/auth', authRoutes);
-app.use('/api/profile', profileRoutes);
-app.use('/api/projects', projectRoutes);
-app.use('/api/tasks', taskRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/reports', reportRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/admin', adminRoutes);
-
-app.use((req, res) => {
-  res.status(404).json({ success: false, message: 'Route not found' });
-});
-
-app.use(errorHandler);
-
 async function startServer() {
+  // Initialize DB FIRST — models are required below so they resolve
+  // sequelize AFTER it has been set by initializeDatabase()
   const connected = await database.initializeDatabase();
 
   if (connected && database.sequelize) {
-    await database.sequelize.sync();
+    await database.sequelize.sync({ alter: false });
     console.log('Database synced');
   }
+
+  // Require routes AFTER DB init so models see the live sequelize instance
+  const authRoutes         = require('./routes/auth');
+  const profileRoutes      = require('./routes/profile');
+  const projectRoutes      = require('./routes/projects');
+  const taskRoutes         = require('./routes/tasks');
+  const dashboardRoutes    = require('./routes/dashboard');
+  const reportRoutes       = require('./routes/reports');
+  const notificationRoutes = require('./routes/notifications');
+  const adminRoutes        = require('./routes/admin');
+
+  app.use('/api/auth',          authRoutes);
+  app.use('/api/profile',       profileRoutes);
+  app.use('/api/projects',      projectRoutes);
+  app.use('/api/tasks',         taskRoutes);
+  app.use('/api/dashboard',     dashboardRoutes);
+  app.use('/api/reports',       reportRoutes);
+  app.use('/api/notifications', notificationRoutes);
+  app.use('/api/admin',         adminRoutes);
+
+  app.use((req, res) => {
+    res.status(404).json({ success: false, message: 'Route not found' });
+  });
+
+  app.use(errorHandler);
 
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
@@ -86,3 +92,4 @@ startServer().catch((err) => {
   console.error('Startup error:', err);
   process.exit(1);
 });
+

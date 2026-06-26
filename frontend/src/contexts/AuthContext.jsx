@@ -3,7 +3,9 @@ import axios from 'axios';
 
 const AuthContext = createContext(null);
 
-const authApi = axios.create({ baseURL: 'http://localhost:5000/api/auth', withCredentials: true });
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://projectmanagementportal-5gn7.onrender.com/api';
+
+const authApi = axios.create({ baseURL: `${BASE_URL}/auth`, withCredentials: true });
 
 authApi.interceptors.request.use((config) => {
   const token = localStorage.getItem('projectnest_token');

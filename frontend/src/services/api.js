@@ -17,6 +17,13 @@ api.interceptors.response.use(
     if (!error.response) {
       return Promise.reject({ message: 'Network error. Please check your connection.' });
     }
+    if (error.response.status === 401) {
+      localStorage.removeItem('projectnest_token');
+      localStorage.removeItem('projectnest_user');
+      if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+        window.location.href = '/login';
+      }
+    }
     return Promise.reject(error.response?.data || error);
   }
 );
