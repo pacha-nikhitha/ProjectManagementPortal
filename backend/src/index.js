@@ -28,6 +28,7 @@ const allowedOrigins = [
   'http://localhost:308',
   'http://localhost:0306',
   'https://project-management-portal-five.vercel.app',
+  'https://projectmanagementportal-5gn7.onrender.com',
 ];
 if (process.env.FRONTEND_URL) {
   allowedOrigins.push(process.env.FRONTEND_URL.replace(/\/$/, ''));
